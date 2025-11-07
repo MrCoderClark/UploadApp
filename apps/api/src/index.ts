@@ -1,0 +1,63 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
+import { config } from './config';
+import { logger } from './utils/logger';
+import { notFoundHandler } from './middleware/notFoundHandler';
+import { errorHandler } from './middleware/errorHandler';
+
+
+const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: config.clientUrl,
+  credentials: true,
+}));
+
+// Logging
+app.use(morgan('combined', {
+  stream: { write: (message) => logger.info(message.trim()) },
+}));
+
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: config.env,
+  });
+});
+
+// API routes will be added here
+// app.use('/api/v1/auth', authRoutes);
+
+// Error handling
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// Start server
+const server = app.listen(config.port, () => {
+  logger.info(`🚀 Server running on ${config.apiUrl}`);
+  logger.info(`📝 Environment: ${config.env}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+export default app;
