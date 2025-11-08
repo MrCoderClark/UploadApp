@@ -10,15 +10,15 @@ Building a security-first file upload platform with:
 ## Phase 1: Authentication System (Custom Clerk Alternative)
 
 ### 1.1 Core Auth Features
-- [ ] User registration (email/password)
+- [x] User registration (email/password)
 - [ ] Email verification with OTP
-- [ ] Login with JWT tokens (access + refresh)
-- [ ] Password reset flow
-- [ ] Session management
+- [x] Login with JWT tokens (access + refresh)
+- [x] Password reset flow
+- [x] Session management
 - [ ] Multi-factor authentication (TOTP)
 - [ ] OAuth providers (Google, GitHub, Microsoft)
 - [ ] Magic link authentication
-- [ ] Account lockout after failed attempts
+- [x] Account lockout after failed attempts
 
 ### 1.2 Organization & Team Management
 - [ ] Organization/workspace creation

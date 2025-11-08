@@ -1,0 +1,422 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String?  @unique
+  password  String // Hashed with bcrypt
+  
+  // Profile information
+  firstName String?
+  lastName  String?
+  avatar    String?
+  phone     String?
+  
+  // Email verification
+  emailVerified Boolean  @default(false)
+  verifiedAt    DateTime?
+  
+  // Account status
+  isActive      Boolean  @default(true)
+  isSuspended   Boolean  @default(false)
+  suspendedAt   DateTime?
+  suspendedReason String?
+  
+  // Security
+  loginAttempts Int      @default(0)
+  lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+  
+  // Multi-factor authentication
+  mfaEnabled    Boolean  @default(false)
+  mfaSecret     String? // TOTP secret
+  backupCodes   String[] // Encrypted backup codes
+  
+  // Metadata
+  metadata      Json?    @default("{}")
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+  
+  // Relations
+  sessions            Session[]
+  refreshTokens       RefreshToken[]
+  verificationTokens  VerificationToken[]
+  passwordResets      PasswordReset[]
+  organizationMembers OrganizationMember[]
+  apiKeys             ApiKey[]
+  uploads             Upload[]
+  auditLogs           AuditLog[]
+  devices             Device[]
+  
+  @@index([email])
+  @@index([username])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  type      VerificationTokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@map("verification_tokens")
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  MAGIC_LINK
+  TWO_FACTOR
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
+}
+
+model Device {
+  id            String   @id @default(uuid())
+  userId        String
+  fingerprint   String // Browser fingerprint
+  name          String? // e.g., "Chrome on Windows"
+  lastUsedAt    DateTime @default(now())
+  isTrusted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, fingerprint])
+  @@index([userId])
+  @@map("devices")
+}
+
+// ============================================
+// ORGANIZATIONS & TEAMS
+// ============================================
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatar      String?
+  website     String?
+  
+  // Settings
+  settings    Json?    @default("{}")
+  
+  // Billing
+  plan        OrganizationPlan @default(FREE)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  
+  // Relations
+  members     OrganizationMember[]
+  apiKeys     ApiKey[]
+  uploads     Upload[]
+  
+  @@index([slug])
+  @@map("organizations")
+}
+
+enum OrganizationPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole
+  
+  // Invitation
+  invitedBy      String?
+  invitedAt      DateTime?
+  acceptedAt     DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+// ============================================
+// API KEYS
+// ============================================
+
+model ApiKey {
+  id             String   @id @default(uuid())
+  name           String
+  key            String   @unique // Hashed
+  keyPrefix      String // First 8 chars for display (e.g., "sk_live_")
+  
+  userId         String?
+  organizationId String?
+  
+  // Permissions
+  scopes         String[] // e.g., ["upload:read", "upload:write"]
+  
+  // Rate limiting
+  rateLimit      Int?     @default(1000) // Requests per hour
+  
+  // Status
+  isActive       Boolean  @default(true)
+  expiresAt      DateTime?
+  lastUsedAt     DateTime?
+  
+  // Usage tracking
+  usageCount     Int      @default(0)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  revokedAt      DateTime?
+  
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([key])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+// ============================================
+// FILE UPLOADS
+// ============================================
+
+model Upload {
+  id             String       @id @default(uuid())
+  
+  // File information
+  filename       String
+  originalName   String
+  mimeType       String
+  size           Int // Bytes
+  extension      String?
+  
+  // Storage
+  storageProvider String      @default("local") // local, s3, gcs, azure
+  storagePath     String
+  storageKey      String?
+  url             String?
+  
+  // Security
+  checksum       String // SHA-256 hash
+  virusScanStatus VirusScanStatus @default(PENDING)
+  virusScanResult String?
+  isQuarantined  Boolean      @default(false)
+  
+  // Processing
+  processingStatus ProcessingStatus @default(PENDING)
+  thumbnailUrl   String?
+  metadata       Json?        @default("{}") // EXIF, OCR results, etc.
+  
+  // Access control
+  isPublic       Boolean      @default(false)
+  signedUrl      String?
+  signedUrlExpiresAt DateTime?
+  
+  // Ownership
+  userId         String?
+  organizationId String?
+  
+  // Tags and categorization
+  tags           String[]
+  folder         String?
+  
+  // Timestamps
+  uploadedAt     DateTime     @default(now())
+  processedAt    DateTime?
+  deletedAt      DateTime? // Soft delete
+  
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([organizationId])
+  @@index([uploadedAt])
+  @@index([mimeType])
+  @@index([checksum])
+  @@map("uploads")
+}
+
+enum VirusScanStatus {
+  PENDING
+  SCANNING
+  CLEAN
+  INFECTED
+  ERROR
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String // e.g., "user.login", "upload.create", "api_key.revoke"
+  resource    String? // Resource type (user, upload, api_key, etc.)
+  resourceId  String? // ID of the resource
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?    @default("{}")
+  createdAt   DateTime @default(now())
+  
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// WEBHOOKS
+// ============================================
+
+model Webhook {
+  id             String   @id @default(uuid())
+  url            String
+  events         String[] // e.g., ["upload.completed", "virus.detected"]
+  secret         String // For signature verification
+  isActive       Boolean  @default(true)
+  
+  // Retry configuration
+  maxRetries     Int      @default(3)
+  retryDelay     Int      @default(60) // Seconds
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  deliveries     WebhookDelivery[]
+  
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id          String   @id @default(uuid())
+  webhookId   String
+  event       String
+  payload     Json
+  
+  // Delivery status
+  status      WebhookDeliveryStatus @default(PENDING)
+  attempts    Int      @default(0)
+  lastAttemptAt DateTime?
+  
+  // Response
+  responseStatus Int?
+  responseBody   String?
+  errorMessage   String?
+  
+  createdAt   DateTime @default(now())
+  deliveredAt DateTime?
+  
+  webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  @@index([webhookId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}

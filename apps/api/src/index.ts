@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -38,8 +38,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes will be added here
-// app.use('/api/v1/auth', authRoutes);
+// API routes
+import authRoutes from './routes/auth.routes';
+import passwordResetRoutes from './routes/passwordReset.routes';
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth/password-reset', passwordResetRoutes);
 
 // Error handling
 app.use(notFoundHandler);
