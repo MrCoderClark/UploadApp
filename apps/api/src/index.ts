@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { notFoundHandler } from './middleware/notFoundHandler';
@@ -12,7 +13,9 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: config.clientUrl,
   credentials: true,
@@ -27,6 +30,9 @@ app.use(morgan('combined', {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.resolve('./uploads')));
 
 // Health check
 app.get('/health', (_req, res) => {
