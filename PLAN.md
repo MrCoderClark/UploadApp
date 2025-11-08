@@ -81,11 +81,19 @@ Building a security-first file upload platform with:
 - [ ] Folder upload support
 - [ ] Paste to upload (clipboard)
 
-### 2.2 File Processing
-- [ ] Image optimization (Sharp)
-- [ ] Thumbnail generation (multiple sizes)
-- [ ] Video transcoding (FFmpeg)
+### 2.2 Image Processing
+- [x] Thumbnail generation (via URL params)
+- [x] Image resizing (width, height, fit modes)
+- [x] Format conversion (JPEG, PNG, WebP, AVIF, GIF)
+- [x] Image optimization (quality control 1-100)
+- [x] On-the-fly transformations via URL query params
+- [x] Image effects (blur, grayscale, rotate)
+- [x] Metadata extraction (dimensions, format, size)
+- [x] Smart resizing (no upscaling)
+- [x] Cache headers (1-year immutable)
 - [ ] EXIF data extraction
+- [ ] Face detection
+- [ ] Smart cropping with AI
 - [ ] OCR for documents (Tesseract)
 - [ ] PDF preview generation
 - [ ] Audio waveform generation
