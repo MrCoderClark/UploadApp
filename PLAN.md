@@ -29,12 +29,12 @@ Building a security-first file upload platform with:
 - [x] Team member management (add/remove/update roles)
 
 ### 1.3 API Key Management
-- [ ] Generate API keys with scopes
-- [ ] Key rotation
-- [ ] Key revocation
-- [ ] Usage tracking per key
-- [ ] Rate limiting per key
-- [ ] Key expiration policies
+- [x] Generate API keys with scopes
+- [x] Key rotation
+- [x] Key revocation
+- [x] Usage tracking per key
+- [x] Rate limiting per key
+- [x] Key expiration policies
 
 ### 1.4 Security Features
 - [ ] JWT with RS256 signing
@@ -66,6 +66,11 @@ Building a security-first file upload platform with:
 ## Phase 2: File Upload Platform
 
 ### 2.1 Core Upload Features
+- [x] Basic file upload with multer
+- [x] File validation (MIME type, size, extension)
+- [x] Checksum calculation (SHA-256)
+- [x] Duplicate detection
+- [x] Storage abstraction layer (local storage)
 - [ ] Resumable uploads (tus protocol)
 - [ ] Chunked upload support
 - [ ] Direct browser-to-storage uploads
