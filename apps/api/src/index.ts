@@ -41,9 +41,11 @@ app.get('/health', (_req, res) => {
 // API routes
 import authRoutes from './routes/auth.routes';
 import passwordResetRoutes from './routes/passwordReset.routes';
+import organizationRoutes from './routes/organization.routes';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth/password-reset', passwordResetRoutes);
+app.use('/api/v1/organizations', organizationRoutes);
 
 // Error handling
 app.use(notFoundHandler);

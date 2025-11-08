@@ -21,12 +21,12 @@ Building a security-first file upload platform with:
 - [x] Account lockout after failed attempts
 
 ### 1.2 Organization & Team Management
-- [ ] Organization/workspace creation
-- [ ] Team member invitations
-- [ ] Role-based access control (Owner, Admin, Member, Guest)
-- [ ] Permission system (granular permissions)
-- [ ] Organization switching
-- [ ] Team member management (add/remove/update roles)
+- [x] Organization/workspace creation
+- [x] Team member invitations
+- [x] Role-based access control (Owner, Admin, Member, Guest)
+- [x] Permission system (granular permissions)
+- [x] Organization switching
+- [x] Team member management (add/remove/update roles)
 
 ### 1.3 API Key Management
 - [ ] Generate API keys with scopes
