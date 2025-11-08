@@ -184,14 +184,21 @@ Building a security-first file upload platform with:
 - [x] Next.js Image optimization for thumbnails
 - [x] Responsive card layout (compact design)
 - [x] shadcn/ui AlertDialog for confirmations
-- [ ] Overview/Analytics page
-  - [ ] Upload statistics
-  - [ ] Storage usage
-  - [ ] Bandwidth usage
-  - [ ] Active users
-  - [ ] Success/failure rates
+- [x] API key management UI
+  - [x] List all API keys
+  - [x] Create key with scopes
+  - [x] Show/hide key visibility
+  - [x] Copy key to clipboard
+  - [x] Delete/revoke keys
+  - [x] Display metadata (created, last used)
+- [x] Overview/Analytics page
+  - [x] Upload statistics (total files, uploads today)
+  - [x] Storage usage visualization
+  - [x] Bandwidth tracking
+  - [x] File type breakdown with progress bars
+  - [x] Recent uploads list
+  - [x] Storage growth chart (7 days)
 - [ ] User management
-- [ ] API key management UI
 - [ ] Organization management UI
 - [ ] Webhook configuration
 - [ ] Settings & configuration
