@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 import { authService } from '@/lib/auth';
@@ -48,6 +49,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const navigation = [
+    { name: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
     { name: 'Uploads', href: '/dashboard', icon: UploadCloud },
     { name: 'Files', href: '/dashboard/files', icon: FolderOpen },
     { name: 'Organizations', href: '/dashboard/organizations', icon: Users },

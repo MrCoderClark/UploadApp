@@ -50,12 +50,14 @@ import passwordResetRoutes from './routes/passwordReset.routes';
 import organizationRoutes from './routes/organization.routes';
 import apiKeyRoutes from './routes/apiKey.routes';
 import uploadRoutes from './routes/upload.routes';
+import analyticsRoutes from './routes/analytics.routes';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth/password-reset', passwordResetRoutes);
 app.use('/api/v1/organizations', organizationRoutes);
 app.use('/api/v1/api-keys', apiKeyRoutes);
 app.use('/api/v1/uploads', uploadRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Error handling
 app.use(notFoundHandler);
