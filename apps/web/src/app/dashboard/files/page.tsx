@@ -1,0 +1,340 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { 
+  Grid3x3, 
+  List, 
+  Search, 
+  Download, 
+  Trash2, 
+  Copy,
+  Image as ImageIcon,
+  FileText,
+  Film,
+  File as FileIcon,
+} from 'lucide-react';
+import api from '@/lib/api';
+import { toast } from 'sonner';
+
+interface Upload {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  createdAt: string;
+}
+
+export default function FilesPage() {
+  const [files, setFiles] = useState<Upload[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  const fetchFiles = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/uploads');
+      setFiles(response.data.data.uploads);
+    } catch {
+      toast.error('Failed to load files');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (file: Upload) => {
+    try {
+      const response = await api.get(`/uploads/${file.id}/download`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', file.originalName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('File downloaded');
+    } catch {
+      toast.error('Failed to download file');
+    }
+  };
+
+  const openDeleteDialog = (fileId: string, filename: string) => {
+    setFileToDelete({ id: fileId, name: filename });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!fileToDelete) return;
+
+    try {
+      await api.delete(`/uploads/${fileToDelete.id}`);
+      setFiles(files.filter(f => f.id !== fileToDelete.id));
+      toast.success(`"${fileToDelete.name}" deleted successfully`);
+      setDeleteDialogOpen(false);
+      setFileToDelete(null);
+    } catch {
+      toast.error('Failed to delete file');
+    }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    const fullUrl = getImageUrl(url);
+    navigator.clipboard.writeText(fullUrl);
+    toast.success('URL copied to clipboard');
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return ImageIcon;
+    if (mimeType.startsWith('video/')) return Film;
+    if (mimeType.includes('pdf') || mimeType.includes('document')) return FileText;
+    return FileIcon;
+  };
+
+  const filteredFiles = files.filter(file =>
+    file.originalName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getImageUrl = (url: string) => {
+    // If URL is relative, prepend API base URL
+    if (url.startsWith('/')) {
+      return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+    }
+    return url;
+  };
+
+  return (
+    <>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete File</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{fileToDelete?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Files</h2>
+          <p className="text-gray-500">{files.length} files uploaded</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid3x3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Input
+          placeholder="Search files..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Files Grid/List */}
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-gray-500">Loading files...</p>
+        </div>
+      ) : filteredFiles.length === 0 ? (
+        <Card>
+          <CardContent className="flex h-64 items-center justify-center">
+            <div className="text-center">
+              <FileIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-gray-500">No files found</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : viewMode === 'grid' ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredFiles.map((file) => {
+            const Icon = getFileIcon(file.mimeType);
+            return (
+              <Card key={file.id} className="overflow-hidden flex flex-col">
+                <div className="h-40 bg-gray-100 flex items-center justify-center relative">
+                  {file.mimeType.startsWith('image/') ? (
+                    <Image
+                      src={getImageUrl(file.url)}
+                      alt={file.originalName}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <Icon className="h-10 w-10 text-gray-400" />
+                  )}
+                </div>
+                <CardContent className="p-3 flex-1 flex flex-col">
+                  <div className="flex-1 min-h-0">
+                    <p className="truncate font-medium text-sm" title={file.originalName}>
+                      {file.originalName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {formatFileSize(file.size)}
+                    </p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopyUrl(file.url)}
+                      title="Copy URL"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownload(file)}
+                      title="Download"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDeleteDialog(file.id, file.originalName)}
+                      title="Delete"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {filteredFiles.map((file) => {
+                const Icon = getFileIcon(file.mimeType);
+                return (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between p-4 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center space-x-4 flex-1 min-w-0">
+                      <div className="shrink-0">
+                        {file.mimeType.startsWith('image/') ? (
+                          <div className="h-12 w-12 rounded relative overflow-hidden">
+                            <Image
+                              src={getImageUrl(file.url)}
+                              alt={file.originalName}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-12 w-12 rounded bg-gray-100 flex items-center justify-center">
+                            <Icon className="h-6 w-6 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-medium" title={file.originalName}>
+                          {file.originalName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyUrl(file.url)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload(file)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(file.id, file.originalName)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+    </>
+  );
+}

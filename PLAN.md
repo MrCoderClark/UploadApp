@@ -71,13 +71,13 @@ Building a security-first file upload platform with:
 - [x] Checksum calculation (SHA-256)
 - [x] Duplicate detection
 - [x] Storage abstraction layer (local storage)
+- [x] Drag & drop interface (react-dropzone)
+- [x] Multiple file uploads
+- [x] Upload progress tracking (individual file progress)
 - [ ] Resumable uploads (tus protocol)
 - [ ] Chunked upload support
 - [ ] Direct browser-to-storage uploads
 - [ ] Signed upload URLs
-- [ ] Upload progress tracking (WebSocket/SSE)
-- [ ] Drag & drop interface
-- [ ] Multiple file uploads
 - [ ] Folder upload support
 - [ ] Paste to upload (clipboard)
 
@@ -113,8 +113,15 @@ Building a security-first file upload platform with:
 - [ ] CDN integration
 
 ### 2.5 File Management
-- [ ] File listing with pagination
-- [ ] Search and filtering
+- [x] File listing with pagination
+- [x] Search and filtering
+- [x] Grid/List view toggle
+- [x] Image thumbnail previews (Next.js Image)
+- [x] File download
+- [x] File deletion with confirmation dialog
+- [x] Copy file URL (full absolute URL)
+- [x] Static file serving from backend
+- [x] Compact card layout with aligned buttons
 - [ ] Tagging system
 - [ ] Folder organization
 - [ ] File versioning
@@ -166,16 +173,26 @@ Building a security-first file upload platform with:
 
 ## Phase 4: Platform & Dashboard
 
-### 4.1 Admin Dashboard
+### 4.1 Admin Dashboard (Frontend)
+- [x] Authentication pages (login/register)
+- [x] Dashboard layout with sidebar navigation
+- [x] File upload page with drag & drop
+- [x] Files browser with grid/list view
+- [x] Individual file upload progress with status icons
+- [x] File actions (download, delete with dialog, copy URL)
+- [x] Search and filter files
+- [x] Next.js Image optimization for thumbnails
+- [x] Responsive card layout (compact design)
+- [x] shadcn/ui AlertDialog for confirmations
 - [ ] Overview/Analytics page
   - [ ] Upload statistics
   - [ ] Storage usage
   - [ ] Bandwidth usage
   - [ ] Active users
   - [ ] Success/failure rates
-- [ ] File browser
 - [ ] User management
-- [ ] API key management
+- [ ] API key management UI
+- [ ] Organization management UI
 - [ ] Webhook configuration
 - [ ] Settings & configuration
 - [ ] Billing & usage limits
