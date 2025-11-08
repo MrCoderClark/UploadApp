@@ -50,8 +50,8 @@ export const config = {
   jwt: {
     accessSecret: env.JWT_ACCESS_SECRET,
     refreshSecret: env.JWT_REFRESH_SECRET,
-    accessExpiresIn: env.JWT_ACCESS_EXPIRES_IN,
-    refreshExpiresIn: env.JWT_REFRESH_EXPIRES_IN,
+    accessExpiresIn: env.JWT_ACCESS_EXPIRES_IN as string | number,
+    refreshExpiresIn: env.JWT_REFRESH_EXPIRES_IN as string | number,
   },
   
   email: {
@@ -76,4 +76,4 @@ export const config = {
   isDevelopment: env.NODE_ENV === 'development',
   isProduction: env.NODE_ENV === 'production',
   isTest: env.NODE_ENV === 'test',
-} as const;
+};
