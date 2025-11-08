@@ -31,9 +31,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.resolve('./uploads')));
-
 // Health check
 app.get('/health', (_req, res) => {
   res.json({
@@ -51,6 +48,10 @@ import organizationRoutes from './routes/organization.routes';
 import apiKeyRoutes from './routes/apiKey.routes';
 import uploadRoutes from './routes/upload.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import transformRoutes from './routes/transform.routes';
+
+// Image transformations (MUST be before static file serving)
+app.use('/uploads', transformRoutes);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth/password-reset', passwordResetRoutes);
@@ -58,6 +59,9 @@ app.use('/api/v1/organizations', organizationRoutes);
 app.use('/api/v1/api-keys', apiKeyRoutes);
 app.use('/api/v1/uploads', uploadRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+
+// Serve uploaded files statically (fallback if no transformations)
+app.use('/uploads', express.static(path.resolve('./uploads')));
 
 // Error handling
 app.use(notFoundHandler);
