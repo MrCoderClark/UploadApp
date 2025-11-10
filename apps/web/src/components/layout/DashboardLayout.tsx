@@ -23,6 +23,7 @@ import {
   Menu,
   BarChart3,
   CreditCard,
+  Webhook,
 } from 'lucide-react';
 import { useState } from 'react';
 import { authService } from '@/lib/auth';
@@ -55,6 +56,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Files', href: '/dashboard/files', icon: FolderOpen },
     { name: 'Organizations', href: '/dashboard/organizations', icon: Users },
     { name: 'API Keys', href: '/dashboard/api-keys', icon: Key },
+    { name: 'Webhooks', href: '/dashboard/webhooks', icon: Webhook },
     { name: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
