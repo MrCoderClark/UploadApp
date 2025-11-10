@@ -65,6 +65,7 @@ model User {
   uploads             Upload[]
   auditLogs           AuditLog[]
   devices             Device[]
+  subscription        Subscription?
   
   @@index([email])
   @@index([username])
@@ -181,9 +182,10 @@ model Organization {
   deletedAt   DateTime?
   
   // Relations
-  members     OrganizationMember[]
-  apiKeys     ApiKey[]
-  uploads     Upload[]
+  members      OrganizationMember[]
+  apiKeys      ApiKey[]
+  uploads      Upload[]
+  subscription Subscription?
   
   @@index([slug])
   @@map("organizations")
@@ -363,6 +365,103 @@ model AuditLog {
   @@index([createdAt])
   @@index([resource, resourceId])
   @@map("audit_logs")
+}
+
+// ============================================
+// SUBSCRIPTIONS & BILLING
+// ============================================
+
+model Subscription {
+  id             String   @id @default(uuid())
+  userId         String?  @unique
+  organizationId String?  @unique
+  
+  // Plan details
+  plan           SubscriptionPlan @default(FREE)
+  status         SubscriptionStatus @default(ACTIVE)
+  
+  // Billing
+  stripeCustomerId       String? @unique
+  stripeSubscriptionId   String? @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  
+  // Usage limits (based on plan)
+  storageLimit   BigInt   @default(1073741824) // 1GB in bytes for FREE
+  uploadLimit    Int      @default(100) // uploads per month
+  bandwidthLimit BigInt   @default(10737418240) // 10GB in bytes
+  
+  // Current usage (reset monthly)
+  storageUsed    BigInt   @default(0)
+  uploadsUsed    Int      @default(0)
+  bandwidthUsed  BigInt   @default(0)
+  
+  // Usage reset tracking
+  usageResetAt   DateTime @default(now())
+  
+  // Trial
+  trialEndsAt    DateTime?
+  
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  canceledAt     DateTime?
+  cancelAtPeriodEnd Boolean @default(false)
+  
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  usageRecords   UsageRecord[]
+  
+  @@index([userId])
+  @@index([organizationId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  UNPAID
+}
+
+model UsageRecord {
+  id             String   @id @default(uuid())
+  subscriptionId String
+  
+  // Usage type
+  type           UsageType
+  amount         BigInt // Bytes for storage/bandwidth, count for uploads
+  
+  // Metadata
+  resourceId     String? // Upload ID, etc.
+  metadata       Json?   @default("{}")
+  
+  createdAt      DateTime @default(now())
+  
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  @@index([subscriptionId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("usage_records")
+}
+
+enum UsageType {
+  STORAGE
+  UPLOAD
+  BANDWIDTH
+  TRANSFORMATION
 }
 
 // ============================================

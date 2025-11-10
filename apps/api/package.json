@@ -12,7 +12,9 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "migrate:users": "tsx src/scripts/migrateExistingUsers.ts",
+    "recalculate:usage": "tsx src/scripts/recalculateUsage.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.9.1",
@@ -36,6 +38,7 @@
     "redis": "^4.6.12",
     "sharp": "^0.34.5",
     "speakeasy": "^2.0.0",
+    "stripe": "^19.3.0",
     "uuid": "^9.0.1",
     "winston": "^3.18.3",
     "zod": "^3.22.4"

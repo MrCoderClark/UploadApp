@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import { authenticate } from '../middleware/auth';
 import { directUploadService } from '../services/directUpload.service';
+import { subscriptionService } from '../services/subscription.service';
 import { AppError } from '../middleware/errorHandler';
 import prisma from '../lib/prisma';
 
@@ -26,6 +27,12 @@ router.post('/prepare', authenticate, async (req: Request, res: Response, next: 
 
     if (typeof fileSize !== 'number' || fileSize <= 0) {
       throw new AppError('Invalid file size', 400);
+    }
+
+    // Check subscription limits
+    const canUpload = await subscriptionService.canUpload(userId, fileSize);
+    if (!canUpload.allowed) {
+      throw new AppError(canUpload.reason || 'Upload not allowed', 403);
     }
 
     // Generate upload token
@@ -127,6 +134,9 @@ router.put('/:uploadId', upload.single('file'), async (req: Request, res: Respon
         tags: [],
       },
     });
+
+    // Track usage
+    await subscriptionService.trackUpload(userId, req.file.size, uploadRecord.id);
 
     res.json({
       success: true,

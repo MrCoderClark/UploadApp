@@ -23,6 +23,10 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().email().optional(),
   
+  STRIPE_SECRET_KEY: z.string().default('sk_test_placeholder'),
+  STRIPE_PUBLISHABLE_KEY: z.string().default('pk_test_placeholder'),
+  STRIPE_WEBHOOK_SECRET: z.string().default('whsec_placeholder'),
+  
   BCRYPT_ROUNDS: z.string().default('12'),
   MAX_LOGIN_ATTEMPTS: z.string().default('5'),
   LOCKOUT_DURATION: z.string().default('900000'),
@@ -61,6 +65,14 @@ export const config = {
     password: env.SMTP_PASSWORD,
     from: env.EMAIL_FROM,
   },
+  
+  stripe: {
+    secretKey: env.STRIPE_SECRET_KEY,
+    publishableKey: env.STRIPE_PUBLISHABLE_KEY,
+    webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+  },
+  
+  frontendUrl: env.CLIENT_URL,
   
   security: {
     bcryptRounds: parseInt(env.BCRYPT_ROUNDS, 10),

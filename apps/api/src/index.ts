@@ -50,6 +50,7 @@ import uploadRoutes from './routes/upload.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import transformRoutes from './routes/transform.routes';
 import directUploadRoutes from './routes/directUpload.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 
 // Image transformations (MUST be before static file serving)
 app.use('/uploads', transformRoutes);
@@ -61,6 +62,7 @@ app.use('/api/v1/api-keys', apiKeyRoutes);
 app.use('/api/v1/uploads', uploadRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/direct-upload', directUploadRoutes);
+app.use('/api/v1/subscription', subscriptionRoutes);
 
 // Serve uploaded files statically (fallback if no transformations)
 app.use('/uploads', express.static(path.resolve('./uploads')));
