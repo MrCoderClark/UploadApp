@@ -57,13 +57,23 @@ export default function DashboardPage() {
         ));
 
         try {
+          // Step 1: Request pre-signed upload URL
+          const prepareResponse = await api.post('/direct-upload/prepare', {
+            filename: fileWithProgress.file.name,
+            mimeType: fileWithProgress.file.type,
+            fileSize: fileWithProgress.file.size,
+          });
+
+          const { uploadUrl, token } = prepareResponse.data.data;
+
+          // Step 2: Upload file directly
           const formData = new FormData();
           formData.append('file', fileWithProgress.file);
-          formData.append('isPublic', 'false');
 
-          await api.post('/uploads', formData, {
+          await api.put(uploadUrl, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
+              'X-Upload-Token': token,
             },
             onUploadProgress: (progressEvent) => {
               const progress = progressEvent.total
