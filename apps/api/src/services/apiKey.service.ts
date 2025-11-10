@@ -2,7 +2,7 @@ import { ApiKey } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
 import crypto from 'crypto';
-import { hashPassword } from '../utils/password';
+import { hashPassword, comparePassword } from '../utils/password';
 
 export interface CreateApiKeyInput {
   name: string;
@@ -279,6 +279,42 @@ export class ApiKeyService {
     });
 
     return newKeyData;
+  }
+
+  /**
+   * Validate API key and return user info
+   */
+  async validateApiKey(plainKey: string): Promise<ApiKey | null> {
+    try {
+      // Get all active API keys
+      const apiKeys = await prisma.apiKey.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } },
+          ],
+        },
+      });
+
+      // Check each key (we need to compare hashes)
+      for (const apiKey of apiKeys) {
+        const isValid = await comparePassword(plainKey, apiKey.key);
+        if (isValid) {
+          // Update last used timestamp
+          await prisma.apiKey.update({
+            where: { id: apiKey.id },
+            data: { lastUsedAt: new Date() },
+          });
+
+          return apiKey;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
   }
 
   /**

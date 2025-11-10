@@ -16,8 +16,29 @@ const app = express();
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
+// CORS - Allow multiple origins for development
+const allowedOrigins = [
+  config.clientUrl, // Main dashboard
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8080',
+];
+
 app.use(cors({
-  origin: config.clientUrl,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
@@ -51,6 +72,7 @@ import analyticsRoutes from './routes/analytics.routes';
 import transformRoutes from './routes/transform.routes';
 import directUploadRoutes from './routes/directUpload.routes';
 import subscriptionRoutes from './routes/subscription.routes';
+import webhookRoutes from './routes/webhook.routes';
 
 // Image transformations (MUST be before static file serving)
 app.use('/uploads', transformRoutes);
@@ -63,6 +85,7 @@ app.use('/api/v1/uploads', uploadRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/direct-upload', directUploadRoutes);
 app.use('/api/v1/subscription', subscriptionRoutes);
+app.use('/api/v1/webhooks', webhookRoutes);
 
 // Serve uploaded files statically (fallback if no transformations)
 app.use('/uploads', express.static(path.resolve('./uploads')));

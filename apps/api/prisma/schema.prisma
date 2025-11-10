@@ -66,6 +66,7 @@ model User {
   auditLogs           AuditLog[]
   devices             Device[]
   subscription        Subscription?
+  webhooks            Webhook[]
   
   @@index([email])
   @@index([username])
@@ -470,6 +471,7 @@ enum UsageType {
 
 model Webhook {
   id             String   @id @default(uuid())
+  userId         String
   url            String
   events         String[] // e.g., ["upload.completed", "virus.detected"]
   secret         String // For signature verification
@@ -482,8 +484,10 @@ model Webhook {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   deliveries     WebhookDelivery[]
   
+  @@index([userId])
   @@map("webhooks")
 }
 

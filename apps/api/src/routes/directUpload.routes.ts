@@ -3,9 +3,10 @@ import multer from 'multer';
 import path from 'path';
 import crypto from 'crypto';
 import fs from 'fs';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authenticateWithApiKey } from '../middleware/auth';
 import { directUploadService } from '../services/directUpload.service';
 import { subscriptionService } from '../services/subscription.service';
+import { webhookService } from '../services/webhook.service';
 import { AppError } from '../middleware/errorHandler';
 import prisma from '../lib/prisma';
 
@@ -15,7 +16,7 @@ const router = Router();
  * Step 1: Request a pre-signed upload URL
  * POST /api/v1/direct-upload/prepare
  */
-router.post('/prepare', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/prepare', authenticateWithApiKey, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { filename, mimeType, fileSize } = req.body;
     const userId = req.user!.userId;
@@ -137,6 +138,23 @@ router.put('/:uploadId', upload.single('file'), async (req: Request, res: Respon
 
     // Track usage
     await subscriptionService.trackUpload(userId, req.file.size, uploadRecord.id);
+
+    // Trigger webhook event
+    await webhookService.triggerEvent({
+      event: 'upload.completed',
+      userId,
+      data: {
+        upload: {
+          id: uploadRecord.id,
+          filename: uploadRecord.filename,
+          originalName: uploadRecord.originalName,
+          mimeType: uploadRecord.mimeType,
+          size: uploadRecord.size,
+          url: uploadRecord.url,
+          uploadedAt: uploadRecord.uploadedAt,
+        },
+      },
+    });
 
     res.json({
       success: true,
