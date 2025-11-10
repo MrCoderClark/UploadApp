@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { uploadService } from '../services/upload.service';
+import { webhookService } from '../services/webhook.service';
 import { AppError } from '../middleware/errorHandler';
 
 export class UploadController {
@@ -118,11 +119,26 @@ export class UploadController {
    */
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
+      const userId = req.user?.userId || req.apiKey?.userId;
+      const fileId = req.params.id;
+
       await uploadService.deleteUpload(
-        req.params.id,
-        req.user?.userId || req.apiKey?.userId || undefined,
+        fileId,
+        userId || undefined,
         req.query.organizationId as string
       );
+
+      // Trigger webhook event
+      if (userId) {
+        await webhookService.triggerEvent({
+          event: 'file.deleted',
+          userId,
+          data: {
+            fileId,
+            deletedAt: new Date().toISOString(),
+          },
+        });
+      }
 
       res.status(200).json({
         success: true,

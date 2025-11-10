@@ -1,0 +1,41 @@
+{
+  "name": "@weirdlookingjay/uploadme-node",
+  "version": "1.0.0",
+  "description": "Node.js SDK for UploadMe file upload service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "nodejs",
+    "upload",
+    "file-upload",
+    "uploadme",
+    "sdk",
+    "server-side"
+  ],
+  "author": "UploadMe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrCoderClark/UploadApp"
+  },
+  "homepage": "https://github.com/MrCoderClark/UploadApp#readme",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

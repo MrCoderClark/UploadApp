@@ -78,9 +78,9 @@ export default function ApiKeysPage() {
         scopes: newKeyScopes,
       });
       
-      const newKey = response.data.data.apiKey;
-      setCreatedKey(newKey.key);
-      setApiKeys([newKey, ...apiKeys]);
+      const { apiKey, plainKey } = response.data.data;
+      setCreatedKey(plainKey); // Use the plain key, not the hashed one
+      setApiKeys([apiKey, ...apiKeys]);
       setNewKeyName('');
       toast.success('API key created successfully');
     } catch {

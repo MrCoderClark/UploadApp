@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
+examples/test-file.txt
+examples/file*.txt
+examples/downloads/

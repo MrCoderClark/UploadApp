@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
-import { config } from '../config';
 import prisma from '../lib/prisma';
+import { config } from '../config';
 import { PLAN_LIMITS } from '../config/plans';
+import { webhookService } from './webhook.service';
 
 const stripe = new Stripe(config.stripe.secretKey, {
   apiVersion: '2025-10-29.clover',
@@ -215,6 +216,17 @@ export class StripeService {
           uploadLimit: freeLimits.uploadLimit,
           bandwidthLimit: BigInt(freeLimits.bandwidthLimit),
           canceledAt: new Date(),
+        },
+      });
+
+      // Trigger webhook event
+      await webhookService.triggerEvent({
+        event: 'subscription.cancelled',
+        userId,
+        data: {
+          plan: 'FREE',
+          cancelledAt: new Date().toISOString(),
+          immediate: true,
         },
       });
     }

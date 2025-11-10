@@ -14,19 +14,96 @@ pnpm add @uploadme/react
 
 ## Quick Start
 
+### 1. Get Your API Key
+
+**For Local Development:**
+1. Clone and run the UploadMe backend:
+   ```bash
+   git clone https://github.com/MrCoderClark/UploadApp
+   cd UploadApp/apps/api
+   npm install
+   npm run dev  # Runs on port 4000
+   ```
+
+2. Run the dashboard:
+   ```bash
+   cd ../web
+   npm install
+   npm run dev  # Runs on port 3000
+   ```
+
+3. Get your API key:
+   - Visit http://localhost:3000/register and create an account
+   - Login and go to http://localhost:3000/dashboard/api-keys
+   - Click "Create API Key" and copy it
+
+**For Production:**
+- Sign up at your deployed UploadMe instance
+- Generate an API key from the dashboard
+
+### 2. Install the SDK
+
+```bash
+npm install @weirdlookingjay/uploadme-react
+```
+
+### 3. Use in Your App
+
 ```tsx
-import { UploadButton } from '@uploadme/react';
+import { UploadButton } from '@weirdlookingjay/uploadme-react';
 
 function App() {
   return (
     <UploadButton
-      apiKey="your-api-key"
+      apiKey="uk_test_your_key_here"  // From dashboard
+      apiUrl="http://localhost:4000/api/v1"  // Local development
       onSuccess={(file) => {
         console.log('Uploaded:', file);
       }}
     />
   );
 }
+```
+
+**Note:** For production, use your deployed API URL instead of localhost.
+
+## CORS Configuration
+
+If you're running the SDK on a different port than the default (e.g., `localhost:8080` instead of `localhost:3000`), you need to configure CORS in the backend.
+
+### Update Backend CORS Settings
+
+In `apps/api/src/index.ts`, update the allowed origins:
+
+```typescript
+const allowedOrigins = [
+  config.clientUrl,
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:8080',  // Add your test app port
+  'http://localhost:8081',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8080',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+```
+
+**After updating, restart your API server:**
+```bash
+cd apps/api
+npm run dev
 ```
 
 ## Components
