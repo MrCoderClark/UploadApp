@@ -1,11 +1,11 @@
 import { User } from '@prisma/client';
 import prisma from '../lib/prisma';
-import redis from '../lib/redis';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import { AppError } from '../middleware/errorHandler';
 import { config } from '../config';
 import { v4 as uuidv4 } from 'uuid';
+import { subscriptionService } from './subscription.service';
 
 export interface RegisterInput {
   email: string;
@@ -53,6 +53,9 @@ export class AuthService {
         lastName: input.lastName,
       },
     });
+
+    // Create free subscription for new user
+    await subscriptionService.createFreeSubscription(user.id);
 
     // Generate tokens
     const accessToken = generateAccessToken(user.id, user.email);
