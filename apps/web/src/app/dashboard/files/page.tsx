@@ -26,9 +26,12 @@ import {
   FileText,
   Film,
   File as FileIcon,
+  Scissors,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { blobToFile } from '@/lib/backgroundRemoval';
+import { useBackgroundRemoval } from '@/hooks/useBackgroundRemoval';
 
 interface Upload {
   id: string;
@@ -47,10 +50,20 @@ export default function FilesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
+  const { processImage, completeJob, getJob, activeJobs } = useBackgroundRemoval();
 
   useEffect(() => {
     fetchFiles();
   }, []);
+
+  // Update toast with progress for active jobs
+  useEffect(() => {
+    activeJobs.forEach((job) => {
+      if (job.status === 'processing') {
+        toast.loading(`${job.stage || 'Processing...'} ${job.progress}%`, { id: `bg-${job.fileId}` });
+      }
+    });
+  }, [activeJobs]);
 
   const fetchFiles = async () => {
     try {
@@ -108,6 +121,68 @@ export default function FilesPage() {
     const fullUrl = getImageUrl(url);
     navigator.clipboard.writeText(fullUrl);
     toast.success('URL copied to clipboard');
+  };
+
+  const handleRemoveBackground = async (file: Upload) => {
+    if (!file.mimeType.startsWith('image/')) {
+      toast.error('Background removal only works with images');
+      return;
+    }
+
+    try {
+      // Fetch the image file
+      const imageUrl = getImageUrl(file.url);
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const imageFile = new File([blob], file.filename, { type: file.mimeType });
+      
+      // Process in Web Worker (background thread)
+      processImage(file.id, imageFile, async (resultBlob) => {
+        try {
+          // Generate filename
+          const baseName = file.originalName.replace(/\.[^/.]+$/, '');
+          const newFilename = `${baseName}-no-bg.png`;
+          
+          // Convert blob to file for upload
+          const processedFile = blobToFile(resultBlob, newFilename);
+          
+          toast.loading('Uploading processed image...', { id: `bg-${file.id}` });
+          
+          // Step 1: Request pre-signed upload URL
+          const prepareResponse = await api.post('/direct-upload/prepare', {
+            filename: processedFile.name,
+            mimeType: processedFile.type,
+            fileSize: processedFile.size,
+          });
+
+          const { uploadUrl, token } = prepareResponse.data.data;
+
+          // Step 2: Upload file directly
+          const formData = new FormData();
+          formData.append('file', processedFile);
+
+          await api.put(uploadUrl, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'X-Upload-Token': token,
+            },
+          });
+          
+          // Refresh the file list to show the new upload
+          await fetchFiles();
+          
+          toast.success('Background removed and uploaded!', { id: `bg-${file.id}` });
+          completeJob(file.id);
+        } catch (error) {
+          console.error('Upload error:', error);
+          toast.error('Failed to upload processed image', { id: `bg-${file.id}` });
+          completeJob(file.id);
+        }
+      });
+    } catch (error) {
+      console.error('Background removal error:', error);
+      toast.error('Failed to remove background. Try a smaller image.', { id: `bg-${file.id}` });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -243,6 +318,18 @@ export default function FilesPage() {
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
+                    {file.mimeType.startsWith('image/') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveBackground(file)}
+                        title="Remove Background"
+                        className="h-8 w-8 p-0"
+                        disabled={!!getJob(file.id)}
+                      >
+                        <Scissors className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -312,6 +399,16 @@ export default function FilesPage() {
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
+                      {file.mimeType.startsWith('image/') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveBackground(file)}
+                          disabled={!!getJob(file.id)}
+                        >
+                          <Scissors className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

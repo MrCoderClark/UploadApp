@@ -24,6 +24,7 @@ import {
   BarChart3,
   CreditCard,
   Webhook,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import { authService } from '@/lib/auth';
@@ -44,7 +45,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       clearAuth();
       toast.success('Logged out successfully');
       router.push('/auth/login');
-    } catch (error) {
+    } catch {
       clearAuth();
       router.push('/auth/login');
     }
@@ -59,6 +60,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Webhooks', href: '/dashboard/webhooks', icon: Webhook },
     { name: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  ];
+
+  // Admin navigation (only shown to admins)
+  const adminNavigation = [
+    { name: 'User Management', href: '/dashboard/admin/users', icon: Shield },
   ];
 
   return (
@@ -91,8 +97,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {sidebarOpen && <span>{item.name}</span>}
             </Link>
           ))}
-        </nav>
 
+          {/* Admin Section */}
+          {(user as { role?: string })?.role === 'ADMIN' || (user as { role?: string })?.role === 'SUPER_ADMIN' ? (
+            <>
+              {sidebarOpen && (
+                <div className="mt-6 mb-2 px-3 text-xs font-semibold text-gray-400 uppercase">
+                  Admin
+                </div>
+              )}
+              {adminNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center space-x-3 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <item.icon className="h-5 w-5" />
+                  {sidebarOpen && <span>{item.name}</span>}
+                </Link>
+              ))}
+            </>
+          ) : null}
+        </nav>
         {/* Toggle button */}
         <div className="border-t p-4">
           <Button

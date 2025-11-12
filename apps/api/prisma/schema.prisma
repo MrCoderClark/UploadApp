@@ -14,11 +14,18 @@ datasource db {
 // AUTHENTICATION & USER MANAGEMENT
 // ============================================
 
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   username  String?  @unique
   password  String // Hashed with bcrypt
+  role      UserRole @default(USER)
   
   // Profile information
   firstName String?

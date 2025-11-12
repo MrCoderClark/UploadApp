@@ -73,6 +73,9 @@ import transformRoutes from './routes/transform.routes';
 import directUploadRoutes from './routes/directUpload.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import webhookRoutes from './routes/webhook.routes';
+import userManagementRoutes from './routes/userManagement.routes';
+import { checkFileAccess } from './middleware/checkFileAccess';
+
 
 // Image transformations (MUST be before static file serving)
 app.use('/uploads', transformRoutes);
@@ -86,9 +89,11 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/direct-upload', directUploadRoutes);
 app.use('/api/v1/subscription', subscriptionRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/admin/users', userManagementRoutes);
 
 // Serve uploaded files statically (fallback if no transformations)
-app.use('/uploads', express.static(path.resolve('./uploads')));
+// Check file access before serving (blocks deleted files)
+app.use('/uploads', checkFileAccess, express.static(path.resolve('./uploads')));
 
 // Error handling
 app.use(notFoundHandler);
