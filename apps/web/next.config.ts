@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     unoptimized: process.env.NODE_ENV === 'development',
   },
+  // Empty turbopack config to silence the warning
+  // Web Workers work natively in modern browsers without special config
+  turbopack: {},
 };
 
 export default nextConfig;
