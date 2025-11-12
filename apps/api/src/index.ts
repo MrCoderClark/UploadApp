@@ -26,9 +26,8 @@ const allowedOrigins = [
   'http://localhost:8081',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:8080',
-  // Add your production URLs here after deployment
-  // 'https://uploadme-web.vercel.app',
-  // 'https://your-custom-domain.com',
+  // Production URLs
+  'https://upload-app-web.vercel.app',
 ];
 
 app.use(cors({
