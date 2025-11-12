@@ -17,7 +17,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS - Allow multiple origins for development
+// CORS - Allow multiple origins for development and production
 const allowedOrigins = [
   config.clientUrl, // Main dashboard
   'http://localhost:3000',
@@ -26,6 +26,9 @@ const allowedOrigins = [
   'http://localhost:8081',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:8080',
+  // Add your production URLs here after deployment
+  // 'https://uploadme-web.vercel.app',
+  // 'https://your-custom-domain.com',
 ];
 
 app.use(cors({
