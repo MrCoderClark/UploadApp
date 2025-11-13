@@ -33,14 +33,23 @@ const format = winston.format.combine(
   )
 );
 
-const transports = [
+// Use /tmp for file logs in serverless environments, or disable file logging
+const transports: winston.transport[] = [
   new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-  }),
-  new winston.transports.File({ filename: 'logs/all.log' }),
 ];
+
+// Only add file transports in non-serverless environments
+if (process.env.VERCEL !== '1') {
+  transports.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+    })
+  );
+  transports.push(
+    new winston.transports.File({ filename: 'logs/all.log' })
+  );
+}
 
 export const logger = winston.createLogger({
   level: level(),
