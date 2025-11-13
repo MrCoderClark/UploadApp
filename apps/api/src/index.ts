@@ -26,8 +26,11 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://127.0.0.1:8080',
   // Production URLs
-  'https://upload-pp-web.vercel.app',
+  'https://upload-app-web.vercel.app',
 ].filter(Boolean); // Remove any undefined values
+
+console.log('🔧 CORS Configuration Loaded');
+console.log('✅ Allowed Origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {

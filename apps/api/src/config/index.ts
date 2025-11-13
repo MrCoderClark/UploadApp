@@ -6,8 +6,8 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('4000'),
-  API_URL: z.string().url(),
-  CLIENT_URL: z.string().url(),
+  API_URL: z.string().url().optional(),
+  CLIENT_URL: z.string().url().optional(),
   
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
