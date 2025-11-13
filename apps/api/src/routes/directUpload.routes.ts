@@ -102,7 +102,9 @@ router.put('/:uploadId', upload.single('file'), async (req: Request, res: Respon
 
     // Generate file path
     const filePath = directUploadService.generateFilePath(userId, uploadToken.filename);
-    const fullPath = path.join('./uploads', filePath);
+    // Use /tmp in serverless environments
+    const uploadsDir = process.env.VERCEL === '1' ? '/tmp/uploads' : './uploads';
+    const fullPath = path.join(uploadsDir, filePath);
 
     // Ensure directory exists
     await directUploadService.ensureDirectory(fullPath);
