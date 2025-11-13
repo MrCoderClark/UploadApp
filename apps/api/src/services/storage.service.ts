@@ -17,7 +17,13 @@ export class LocalStorageProvider implements StorageProvider {
   private baseUrl: string;
 
   constructor(baseDir: string = './uploads', baseUrl: string = '/uploads') {
-    this.baseDir = path.resolve(baseDir);
+    // Use /tmp in serverless environments (Vercel)
+    if (process.env.VERCEL === '1') {
+      this.baseDir = '/tmp/uploads';
+      logger.warn('⚠️ Running in serverless mode - using /tmp for uploads (files will be ephemeral)');
+    } else {
+      this.baseDir = path.resolve(baseDir);
+    }
     this.baseUrl = baseUrl;
     this.ensureDirectoryExists();
   }
