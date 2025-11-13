@@ -115,19 +115,21 @@ app.use('/uploads', checkFileAccess, express.static(path.resolve('./uploads')));
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(config.port, () => {
-  logger.info(`🚀 Server running on ${config.apiUrl}`);
-  logger.info(`📝 Environment: ${config.env}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
+// Start server only in non-serverless environments
+if (process.env.VERCEL !== '1') {
+  const server = app.listen(config.port, () => {
+    logger.info(`🚀 Server running on ${config.apiUrl}`);
+    logger.info(`📝 Environment: ${config.env}`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+  });
+}
 
 export default app;
