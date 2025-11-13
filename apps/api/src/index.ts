@@ -26,7 +26,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://127.0.0.1:8080',
   // Production URLs
-  'https://upload-app-web.vercel.app',
+  'https://upload-pp-web.vercel.app',
 ].filter(Boolean); // Remove any undefined values
 
 app.use(cors({
@@ -34,9 +34,15 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     
+    // Debug logging
+    console.log('CORS Check - Origin:', origin);
+    console.log('CORS Check - Allowed Origins:', allowedOrigins);
+    
     if (allowedOrigins.includes(origin)) {
+      console.log('CORS Check - ALLOWED');
       callback(null, origin);
     } else {
+      console.log('CORS Check - BLOCKED');
       callback(new Error('Not allowed by CORS'));
     }
   },
