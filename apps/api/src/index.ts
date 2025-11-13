@@ -19,7 +19,6 @@ app.use(helmet({
 
 // CORS - Allow multiple origins for development and production
 const allowedOrigins = [
-  config.clientUrl, // Main dashboard
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:8080',
@@ -28,7 +27,7 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
   // Production URLs
   'https://upload-app-web.vercel.app',
-];
+].filter(Boolean); // Remove any undefined values
 
 app.use(cors({
   origin: (origin, callback) => {
