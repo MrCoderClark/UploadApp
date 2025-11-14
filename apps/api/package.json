@@ -18,6 +18,8 @@
     "recalculate:usage": "tsx src/scripts/recalculateUsage.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.931.0",
+    "@aws-sdk/s3-request-presigner": "^3.931.0",
     "@prisma/client": "^5.9.1",
     "@types/multer": "^1.4.11",
     "@types/nodemailer": "^6.4.14",

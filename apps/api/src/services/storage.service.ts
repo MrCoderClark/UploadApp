@@ -108,10 +108,9 @@ export class LocalStorageProvider implements StorageProvider {
 class StorageService {
   private provider: StorageProvider;
 
-  constructor() {
-    // Default to local storage
-    // Can be extended to support S3, GCS, Azure, etc.
-    this.provider = new LocalStorageProvider();
+  constructor(provider?: StorageProvider) {
+    // Use provided provider or default to local storage
+    this.provider = provider || new LocalStorageProvider();
   }
 
   setProvider(provider: StorageProvider): void {
@@ -139,4 +138,20 @@ class StorageService {
   }
 }
 
-export const storageService = new StorageService();
+// Initialize storage service with appropriate provider
+import { B2StorageProvider } from './b2Storage.service';
+import { config } from '../config';
+
+const getStorageProvider = (): StorageProvider => {
+  // Use B2 in production if configured
+  if (config.isProduction && config.b2.keyId && config.b2.bucketName) {
+    logger.info('Using B2 Storage Provider');
+    return new B2StorageProvider();
+  }
+  
+  // Use local storage for development
+  logger.info('Using Local Storage Provider');
+  return new LocalStorageProvider();
+};
+
+export const storageService = new StorageService(getStorageProvider());

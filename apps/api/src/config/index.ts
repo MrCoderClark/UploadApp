@@ -33,6 +33,13 @@ const envSchema = z.object({
   
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
+  
+  B2_KEY_ID: z.string().optional(),
+  B2_APPLICATION_KEY: z.string().optional(),
+  B2_BUCKET_NAME: z.string().optional(),
+  B2_BUCKET_ID: z.string().optional(),
+  B2_ENDPOINT: z.string().optional(),
+  B2_REGION: z.string().default('us-east-005'),
 });
 
 const env = envSchema.parse(process.env);
@@ -83,6 +90,15 @@ export const config = {
   rateLimit: {
     windowMs: parseInt(env.RATE_LIMIT_WINDOW_MS, 10),
     maxRequests: parseInt(env.RATE_LIMIT_MAX_REQUESTS, 10),
+  },
+  
+  b2: {
+    keyId: env.B2_KEY_ID || '',
+    applicationKey: env.B2_APPLICATION_KEY || '',
+    bucketName: env.B2_BUCKET_NAME || '',
+    bucketId: env.B2_BUCKET_ID || '',
+    endpoint: env.B2_ENDPOINT || '',
+    region: env.B2_REGION,
   },
   
   isDevelopment: env.NODE_ENV === 'development',
