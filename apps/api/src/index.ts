@@ -90,6 +90,7 @@ import directUploadRoutes from './routes/directUpload.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import webhookRoutes from './routes/webhook.routes';
 import userManagementRoutes from './routes/userManagement.routes';
+import filesRoutes from './routes/files.routes';
 import { checkFileAccess } from './middleware/checkFileAccess';
 
 
@@ -105,6 +106,7 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/direct-upload', directUploadRoutes);
 app.use('/api/v1/subscription', subscriptionRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/files', filesRoutes);
 app.use('/api/v1/admin/users', userManagementRoutes);
 
 // Serve uploaded files statically (fallback if no transformations)

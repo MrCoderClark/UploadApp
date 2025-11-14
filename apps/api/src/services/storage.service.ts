@@ -10,6 +10,7 @@ export interface StorageProvider {
   delete(filepath: string): Promise<void>;
   exists(filepath: string): Promise<boolean>;
   getUrl(filepath: string): string;
+  getSignedUrl?(filepath: string, expiresIn?: number): Promise<string>;
 }
 
 export class LocalStorageProvider implements StorageProvider {
@@ -134,6 +135,14 @@ class StorageService {
   }
 
   getUrl(filepath: string): string {
+    return this.provider.getUrl(filepath);
+  }
+
+  async getSignedUrl(filepath: string, expiresIn: number = 3600): Promise<string> {
+    if (this.provider.getSignedUrl) {
+      return this.provider.getSignedUrl(filepath, expiresIn);
+    }
+    // Fallback to regular URL for providers that don't support signed URLs
     return this.provider.getUrl(filepath);
   }
 }

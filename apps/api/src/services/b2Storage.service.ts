@@ -15,11 +15,12 @@ export class B2StorageProvider implements StorageProvider {
 
     this.s3Client = new S3Client({
       endpoint: `https://${this.endpoint}`,
-      region: config.b2.region,
+      region: 'us-east-005', // B2 requires specific region format
       credentials: {
         accessKeyId: config.b2.keyId,
         secretAccessKey: config.b2.applicationKey,
       },
+      forcePathStyle: true, // Required for B2
     });
 
     logger.info('✓ B2 Storage Provider initialized');
