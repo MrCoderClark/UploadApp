@@ -143,14 +143,16 @@ import { B2StorageProvider } from './b2Storage.service';
 import { config } from '../config';
 
 const getStorageProvider = (): StorageProvider => {
-  // Use B2 in production if configured
-  if (config.isProduction && config.b2.keyId && config.b2.bucketName) {
-    logger.info('Using B2 Storage Provider');
+  logger.info(`Storage Provider Selection - isProduction: ${config.isProduction}, isVercel: ${process.env.VERCEL === '1'}, B2 keyId: ${config.b2.keyId ? 'SET' : 'NOT SET'}, B2 bucketName: ${config.b2.bucketName ? 'SET' : 'NOT SET'}`);
+  
+  // Use B2 in production/Vercel if configured
+  if ((config.isProduction || process.env.VERCEL === '1') && config.b2.keyId && config.b2.bucketName) {
+    logger.info('✅ Using B2 Storage Provider');
     return new B2StorageProvider();
   }
   
   // Use local storage for development
-  logger.info('Using Local Storage Provider');
+  logger.info('⚠️ Using Local Storage Provider (files will be ephemeral in serverless)');
   return new LocalStorageProvider();
 };
 

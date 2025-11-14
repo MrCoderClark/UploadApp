@@ -7,6 +7,7 @@ import { authenticate, authenticateWithApiKey } from '../middleware/auth';
 import { directUploadService } from '../services/directUpload.service';
 import { subscriptionService } from '../services/subscription.service';
 import { webhookService } from '../services/webhook.service';
+import { storageService } from '../services/storage.service';
 import { AppError } from '../middleware/errorHandler';
 import prisma from '../lib/prisma';
 
@@ -102,18 +103,15 @@ router.put('/:uploadId', upload.single('file'), async (req: Request, res: Respon
 
     // Generate file path
     const filePath = directUploadService.generateFilePath(userId, uploadToken.filename);
-    // Use /tmp in serverless environments
-    const uploadsDir = process.env.VERCEL === '1' ? '/tmp/uploads' : './uploads';
-    const fullPath = path.join(uploadsDir, filePath);
-
-    // Ensure directory exists
-    await directUploadService.ensureDirectory(fullPath);
+    const folder = path.dirname(filePath);
+    const filename = path.basename(filePath);
 
     // Calculate checksum
     const checksum = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
 
-    // Save file
-    await fs.promises.writeFile(fullPath, req.file.buffer);
+    // Save file to storage (B2 or local)
+    const storagePath = await storageService.save(req.file.buffer, filename, folder);
+    const url = storageService.getUrl(storagePath);
 
     // Consume token
     directUploadService.consumeToken(token);
@@ -122,14 +120,14 @@ router.put('/:uploadId', upload.single('file'), async (req: Request, res: Respon
     const uploadRecord = await prisma.upload.create({
       data: {
         userId,
-        filename: path.basename(filePath),
+        filename: filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
         extension: path.extname(req.file.originalname),
-        storageProvider: 'local',
-        storagePath: filePath,
-        url: `/uploads/${filePath}`,
+        storageProvider: process.env.VERCEL === '1' ? 'b2' : 'local',
+        storagePath: storagePath,
+        url: url,
         checksum,
         virusScanStatus: 'PENDING',
         processingStatus: 'PENDING',
