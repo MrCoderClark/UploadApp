@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import SecureImage from '@/components/SecureImage';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ interface Upload {
   size: number;
   url: string;
   createdAt: string;
+  signedUrl?: string; // Cached signed URL
 }
 
 export default function FilesPage() {
@@ -117,10 +118,14 @@ export default function FilesPage() {
     }
   };
 
-  const handleCopyUrl = (url: string) => {
-    const fullUrl = getImageUrl(url);
-    navigator.clipboard.writeText(fullUrl);
-    toast.success('URL copied to clipboard');
+  const handleCopyUrl = async (fileId: string) => {
+    try {
+      const signedUrl = await getImageUrl(fileId);
+      navigator.clipboard.writeText(signedUrl);
+      toast.success('URL copied to clipboard (expires in 1 hour)');
+    } catch {
+      toast.error('Failed to copy URL');
+    }
   };
 
   const handleRemoveBackground = async (file: Upload) => {
@@ -131,7 +136,7 @@ export default function FilesPage() {
 
     try {
       // Fetch the image file
-      const imageUrl = getImageUrl(file.url);
+      const imageUrl = await getImageUrl(file.id);
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const imageFile = new File([blob], file.filename, { type: file.mimeType });
@@ -204,12 +209,32 @@ export default function FilesPage() {
     file.originalName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getImageUrl = (url: string) => {
-    // If URL is relative, prepend API base URL
-    if (url.startsWith('/')) {
-      return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${url}`;
+  const getImageUrl = async (fileId: string): Promise<string> => {
+    try {
+      // Check if we already have a cached signed URL
+      const file = files.find(f => f.id === fileId);
+      if (file?.signedUrl) {
+        return file.signedUrl;
+      }
+
+      // Fetch signed URL from API
+      const response = await api.get(`/files/${fileId}/url`);
+      const signedUrl = response.data.data.url;
+
+      // Cache the signed URL
+      setFiles(prevFiles => 
+        prevFiles.map(f => 
+          f.id === fileId ? { ...f, signedUrl } : f
+        )
+      );
+
+      return signedUrl;
+    } catch (error) {
+      console.error('Failed to get signed URL:', error);
+      // Fallback to direct URL if signed URL fails
+      const file = files.find(f => f.id === fileId);
+      return file?.url || '';
     }
-    return url;
   };
 
   return (
@@ -289,11 +314,12 @@ export default function FilesPage() {
               <Card key={file.id} className="overflow-hidden flex flex-col">
                 <div className="h-40 bg-gray-100 flex items-center justify-center relative">
                   {file.mimeType.startsWith('image/') ? (
-                    <Image
-                      src={getImageUrl(file.url)}
+                    <SecureImage
+                      fileId={file.id}
                       alt={file.originalName}
                       fill
                       className="object-cover"
+                      getSignedUrl={getImageUrl}
                     />
                   ) : (
                     <Icon className="h-10 w-10 text-gray-400" />
@@ -312,7 +338,7 @@ export default function FilesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleCopyUrl(file.url)}
+                      onClick={() => handleCopyUrl(file.id)}
                       title="Copy URL"
                       className="h-8 w-8 p-0"
                     >
@@ -369,11 +395,12 @@ export default function FilesPage() {
                       <div className="shrink-0">
                         {file.mimeType.startsWith('image/') ? (
                           <div className="h-12 w-12 rounded relative overflow-hidden">
-                            <Image
-                              src={getImageUrl(file.url)}
+                            <SecureImage
+                              fileId={file.id}
                               alt={file.originalName}
                               fill
                               className="object-cover"
+                              getSignedUrl={getImageUrl}
                             />
                           </div>
                         ) : (
@@ -395,7 +422,7 @@ export default function FilesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleCopyUrl(file.url)}
+                        onClick={() => handleCopyUrl(file.id)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
