@@ -135,10 +135,11 @@ export default function FilesPage() {
     }
 
     try {
-      // Fetch the image file
-      const imageUrl = await getImageUrl(file.id);
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      // Fetch the image file via API proxy (avoids CORS issues)
+      const response = await api.get(`/files/${file.id}/download`, {
+        responseType: 'blob',
+      });
+      const blob = response.data;
       const imageFile = new File([blob], file.filename, { type: file.mimeType });
       
       // Process in Web Worker (background thread)
