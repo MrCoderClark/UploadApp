@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { authenticate } from '../middleware/auth';
+import { authenticateWithApiKey } from '../middleware/auth';
 import { storageService } from '../services/storage.service';
 import { AppError } from '../middleware/errorHandler';
 import prisma from '../lib/prisma';
@@ -10,7 +10,7 @@ const router = Router();
  * Get signed URL for a file
  * GET /api/v1/files/:fileId/url
  */
-router.get('/:fileId/url', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:fileId/url', authenticateWithApiKey, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { fileId } = req.params;
     const userId = req.user!.userId;
@@ -48,7 +48,7 @@ router.get('/:fileId/url', authenticate, async (req: Request, res: Response, nex
  * Proxy file download (for CORS-free access)
  * GET /api/v1/files/:fileId/download
  */
-router.get('/:fileId/download', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:fileId/download', authenticateWithApiKey, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { fileId } = req.params;
     const userId = req.user!.userId;
