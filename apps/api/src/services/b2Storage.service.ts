@@ -108,7 +108,7 @@ export class B2StorageProvider implements StorageProvider {
     return `https://${this.endpoint}/${this.bucketName}/${filepath}`;
   }
 
-  async getSignedUrl(filepath: string, expiresIn: number = 3600): Promise<string> {
+  async getSignedUrl(filepath: string, expiresIn: number = 7 * 24 * 60 * 60): Promise<string> {
     try {
       const command = new GetObjectCommand({
         Bucket: this.bucketName,

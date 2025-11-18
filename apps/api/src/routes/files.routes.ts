@@ -29,14 +29,16 @@ router.get('/:fileId/url', authenticateWithApiKey, async (req: Request, res: Res
       throw new AppError('Access denied', 403);
     }
 
-    // Generate signed URL (expires in 1 hour)
-    const signedUrl = await storageService.getSignedUrl(file.storagePath, 3600);
+    // Generate signed URL (no expiration for ChatFlow compatibility)
+    const expiresIn = 604800; // 7 days maximum allowed by S3/B2
+    // Note: S3/B2 requires an expiration, 7 days is the practical maximum
+    const signedUrl = await storageService.getSignedUrl(file.storagePath, expiresIn);
 
     res.json({
       success: true,
       data: {
         url: signedUrl,
-        expiresIn: 3600,
+        expiresIn,
       },
     });
   } catch (error) {

@@ -138,7 +138,7 @@ class StorageService {
     return this.provider.getUrl(filepath);
   }
 
-  async getSignedUrl(filepath: string, expiresIn: number = 3600): Promise<string> {
+  async getSignedUrl(filepath: string, expiresIn: number = 7 * 24 * 60 * 60): Promise<string> {
     if (this.provider.getSignedUrl) {
       return this.provider.getSignedUrl(filepath, expiresIn);
     }
